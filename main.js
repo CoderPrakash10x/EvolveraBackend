@@ -19,8 +19,8 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://evolvera-frontend-f9xr.vercel.app",
-      "https://evolvera-frontend-f9xr-b0oia9czg-prakashs-projects-e9516495.vercel.app"
+      "https://evolvera-frontend-u8aw.vercel.app/",
+      "evolvera-frontend-u8aw-h3vdnxssj-prakashs-projects-e9516495.vercel.app"
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
