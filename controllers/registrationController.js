@@ -1,6 +1,13 @@
 const Registration = require("../models/Registration");
 const Event = require("../models/Event");
-const sendEmail = require("../utils/sendEmail"); // 👈 Email utility import karein
+const sendEmail = require("../utils/sendEmail");
+
+/* ================= UTIL ================= */
+const normalizeDate = (date) => {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
 
 // POST /api/registrations
 exports.createRegistration = async (req, res) => {
@@ -13,44 +20,43 @@ exports.createRegistration = async (req, res) => {
       members
     } = req.body;
 
-    // 1️⃣ Event exist?
+    if (!event) {
+      return res.status(400).json({ message: "Event ID required" });
+    }
+
+    /* 1️⃣ Event exist? */
     const eventDoc = await Event.findById(event);
     if (!eventDoc) {
       return res.status(404).json({ message: "Event not found" });
     }
 
-    // 2️⃣ AUTO CLOSE if deadline crossed
-    if (
-      eventDoc.registrationDeadline &&
-      new Date() > eventDoc.registrationDeadline
-    ) {
-      eventDoc.isRegistrationOpen = false;
-      await eventDoc.save();
+    /* 2️⃣ DATE BASED REGISTRATION WINDOW (FINAL TRUTH) */
+    const today = normalizeDate(new Date());
+    const regStart = normalizeDate(eventDoc.registrationStartDate);
+    const regEnd = normalizeDate(eventDoc.registrationEndDate);
+    regEnd.setHours(23, 59, 59, 999);
 
+    if (today < regStart) {
       return res.status(403).json({
-        message: "Registration closed (deadline crossed)"
+        message: "Registration coming soon"
       });
     }
 
-    if (!req.body.event) {
-  return res.status(400).json({ message: "Event ID required" });
-}
-
-    // 3️⃣ Manual close / Coming soon
-    if (!eventDoc.isRegistrationOpen) {
+    if (today > regEnd) {
       return res.status(403).json({
-        message: "Registration closed / Coming soon"
+        message: "Registration closed"
       });
     }
 
-    // 4️⃣ Event already completed
-    if (eventDoc.eventDate && eventDoc.eventDate < new Date()) {
+    /* 3️⃣ Event already completed? */
+    const eventDate = normalizeDate(eventDoc.eventDate);
+    if (eventDate < today) {
       return res.status(403).json({
         message: "Event already completed"
       });
     }
 
-    // 5️⃣ Team rules
+    /* 4️⃣ Team rules */
     if (registrationType === "team") {
       if (!teamName) {
         return res.status(400).json({ message: "Team name is required" });
@@ -60,7 +66,7 @@ exports.createRegistration = async (req, res) => {
       }
     }
 
-    // 6️⃣ Create registration
+    /* 5️⃣ Create registration */
     const registration = await Registration.create({
       event,
       registrationType,
@@ -69,47 +75,30 @@ exports.createRegistration = async (req, res) => {
       members: registrationType === "team" ? members : []
     });
 
-    // 📧 7️⃣ EMAIL LOGIC START
-    // Registration document se email nikalna (Model ke hisab se teamLeader.email check karein)
-    const userEmail = teamLeader?.email; 
+    /* 6️⃣ EMAIL */
+    const userEmail = teamLeader?.email;
     const userName = teamLeader?.name || "Participant";
 
     if (userEmail) {
-      const emailMessage = `
-        <div style="font-family: sans-serif; border: 1px solid #e1e1e1; padding: 20px; border-radius: 10px;">
-          <h2 style="color: #f97316;">Registration Confirmed!</h2>
-          <p>Hi <b>${userName}</b>,</p>
-          <p>Aapka registration <b>${eventDoc.title}</b> ke liye successfully ho gaya hai.</p>
-          <hr/>
-          <p><b>Event Details:</b></p>
-          <ul>
-            <li><b>Event:</b> ${eventDoc.title}</li>
-            <li><b>Location:</b> ${eventDoc.location}</li>
-            <li><b>Type:</b> ${registrationType}</li>
-            ${registrationType === 'team' ? `<li><b>Team Name:</b> ${teamName}</li>` : ''}
-          </ul>
-          <p>Hum aapse jald hi contact karenge. Best of luck!</p>
-          <br/>
-          <p style="font-size: 12px; color: #888;">Team Evolvera Club</p>
-        </div>
-      `;
-
-      // Background mein bhejenge taaki response delay na ho
       sendEmail({
         email: userEmail,
-        subject: `Confirmation: ${eventDoc.title} Registration`,
-        message: emailMessage
-      }).catch(err => console.log("Email error:", err.message));
+        subject: `Registration Confirmed – ${eventDoc.title}`,
+        message: `
+          <h2 style="color:#f97316;">Registration Confirmed</h2>
+          <p>Hi <b>${userName}</b>,</p>
+          <p>You are successfully registered for <b>${eventDoc.title}</b>.</p>
+          <p><b>Event Date:</b> ${eventDoc.eventDate.toDateString()}</p>
+          <p>— Team Evolvera Club</p>
+        `
+      }).catch(() => {});
     }
-    // 📧 EMAIL LOGIC END
 
     return res.status(201).json({
-        message: "Registration successful! Confirmation email has been sent.",
-        registration
+      message: "Registration successful",
+      registration
     });
 
   } catch (error) {
-    // 8️⃣ Duplicate registration
     if (error.code === 11000) {
       return res.status(409).json({
         message: "You have already registered for this event"
