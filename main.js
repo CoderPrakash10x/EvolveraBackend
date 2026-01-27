@@ -14,15 +14,22 @@ connectDB();
 const app = express();
 
 // Middleware
+
 app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://evolvera-frontend-f9xr.vercel.app/" 
+      "https://evolvera-frontend-f9xr.vercel.app",
+      "https://evolvera-frontend-f9xr-b0oia9czg-prakashs-projects-e9516495.vercel.app"
     ],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
   })
 );
+
+// 🔥 VERY IMPORTANT (preflight fix)
+app.options("*", cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
