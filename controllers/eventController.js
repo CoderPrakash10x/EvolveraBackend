@@ -1,44 +1,88 @@
-const Event = require('../models/Event');
+const Event = require("../models/Event");
 const slugify = require("slugify");
 
-// CREATE EVENT
+/* ================= UTIL: NORMALIZE DATE ================= */
+const normalizeDate = (date) => {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+
+/* ================= UTIL: STATUS + REGISTRATION LOGIC ================= */
+/*
+  status:
+    past      -> eventDate < today
+    live      -> eventDate === today
+    upcoming  -> eventDate > today
+
+  isRegistrationOpen:
+    true  -> today between registrationStartDate & registrationEndDate
+*/
+const getComputedFields = (event) => {
+  const today = normalizeDate(new Date());
+  const eventDate = normalizeDate(event.eventDate);
+
+  const regStart = event.registrationStartDate
+    ? normalizeDate(event.registrationStartDate)
+    : null;
+
+  const regEnd = event.registrationEndDate
+    ? normalizeDate(event.registrationEndDate)
+    : null;
+
+  // EVENT STATUS
+  let status = "upcoming";
+  if (eventDate < today) status = "past";
+  else if (eventDate.getTime() === today.getTime()) status = "live";
+
+  // REGISTRATION STATUS
+  let isRegistrationOpen = false;
+  if (regStart && regEnd) {
+    if (today >= regStart && today <= regEnd) {
+      isRegistrationOpen = true;
+    }
+  }
+
+  return { status, isRegistrationOpen };
+};
+
+/* ================= CREATE EVENT ================= */
 exports.createEvent = async (req, res) => {
-  console.log("Body Data:", req.body); // Check karein ye terminal mein dikh raha hai?
-  console.log("File Data:", req.file);
   try {
-    // req.file humein uploadMiddleware se milta hai
-    // Agar image upload hui hai, toh uska secure_url use karenge
-    const imageUrl = req.file ? req.file.path : ""; 
+    const imageUrl = req.file ? req.file.path : "";
 
-    const eventData = {
-      ...req.body,
-      coverImage: imageUrl, // Database mein Cloudinary ka URL jayega
+    const event = await Event.create({
+      title: req.body.title,
+      description: req.body.description,
+      location: req.body.location,
+      eventDate: req.body.eventDate,
+      registrationStartDate: req.body.registrationStartDate,
+      registrationEndDate: req.body.registrationEndDate,
+      slug: slugify(req.body.title, { lower: true }),
+      coverImage: imageUrl,
       createdBy: req.admin._id
-    };
+    });
 
-    const event = await Event.create(eventData);
-    res.status(201).json(event);
+    res.status(201).json({
+      ...event.toObject(),
+      ...getComputedFields(event)
+    });
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 };
 
-// UPDATE EVENT
+/* ================= UPDATE EVENT ================= */
 exports.updateEvent = async (req, res) => {
   try {
-    const { id } = req.params;
-    let updates = req.body;
+    let updates = { ...req.body };
 
-    if (req.file) {
-      updates.coverImage = req.file.path;
-    }
-
-    if (updates.title) {
+    if (req.file) updates.coverImage = req.file.path;
+    if (updates.title)
       updates.slug = slugify(updates.title, { lower: true });
-    }
 
     const event = await Event.findByIdAndUpdate(
-      id,
+      req.params.id,
       updates,
       { new: true, runValidators: true }
     );
@@ -48,56 +92,49 @@ exports.updateEvent = async (req, res) => {
     }
 
     res.json({
-      success: true,
-      message: "Event updated successfully",
-      event
+      ...event.toObject(),
+      ...getComputedFields(event)
     });
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 };
 
-// DELETE EVENT
-exports.deleteEvent = async (req, res) => {
+/* ================= GET EVENTS ================= */
+exports.getEvents = async (req, res) => {
   try {
-    const { id } = req.params;
-    const event = await Event.findByIdAndDelete(id);
+    const events = await Event.find().sort({ eventDate: 1 });
+
+    res.json(
+      events.map((event) => ({
+        ...event.toObject(),
+        ...getComputedFields(event)
+      }))
+    );
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/* ================= GET BY ID ================= */
+exports.getEventById = async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.id);
 
     if (!event) {
       return res.status(404).json({ message: "Event not found" });
     }
 
-    res.json({ message: "Event deleted successfully" });
+    res.json({
+      ...event.toObject(),
+      ...getComputedFields(event)
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-// GET ALL EVENTS (For Admin Table and User Page)
-exports.getEvents = async (req, res) => {
-  try {
-    // .sort({ createdAt: -1 }) se naye events sabse upar dikhenge
-    const events = await Event.find().sort({ createdAt: -1 });
-    res.status(200).json(events);
-  } catch (err) {
-    res.status(500).json({ message: "Events fetch karne mein error: " + err.message });
-  }
-};
-
-// GET SINGLE EVENT BY ID (For Edit Form or Details Page)
-exports.getEventById = async (req, res) => {
-  try {
-    const event = await Event.findById(req.params.id);
-    if (!event) {
-      return res.status(404).json({ message: "Event nahi mila" });
-    }
-    res.status(200).json(event);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
-// GET EVENT BY SLUG (For Public Event Details Page)
+/* ================= GET BY SLUG ================= */
 exports.getEventBySlug = async (req, res) => {
   try {
     const event = await Event.findOne({ slug: req.params.slug });
@@ -106,7 +143,25 @@ exports.getEventBySlug = async (req, res) => {
       return res.status(404).json({ message: "Event not found" });
     }
 
-    res.json(event);
+    res.json({
+      ...event.toObject(),
+      ...getComputedFields(event)
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/* ================= DELETE EVENT ================= */
+exports.deleteEvent = async (req, res) => {
+  try {
+    const event = await Event.findByIdAndDelete(req.params.id);
+
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    res.json({ message: "Event deleted" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

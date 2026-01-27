@@ -1,17 +1,45 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const upload = require('../middlewares/uploadMiddleware');
-const { protectAdmin } = require('../middlewares/authMiddleware');
-const { createGalleryEvent,deleteGallery, getAllGalleries } = require('../controllers/galleryController');
+const upload = require("../middlewares/uploadMiddleware");
+const { protectAdmin } = require("../middlewares/authMiddleware");
 
-// 'cover' ek photo lega, 'images' max 20 photos lega
+const {
+  createGalleryEvent,
+  getAllGalleries,
+  getGalleryById,
+  addImagesToGallery,
+  deleteGallery,
+} = require("../controllers/galleryController");
+
 const galleryUpload = upload.fields([
-  { name: 'cover', maxCount: 1 },
-  { name: 'images', maxCount: 20 }
+  { name: "cover", maxCount: 1 },
+  { name: "images", maxCount: 20 },
 ]);
 
-router.get('/', getAllGalleries);
-router.post('/', protectAdmin, galleryUpload, createGalleryEvent);
-router.delete('/:id', protectAdmin, deleteGallery);
+/* =====================
+   PUBLIC ROUTES
+===================== */
+
+// User-side gallery
+router.get("/", getAllGalleries);
+
+/* =====================
+   ADMIN ROUTES
+===================== */
+
+router.post("/admin", protectAdmin, galleryUpload, createGalleryEvent);
+
+router.get("/admin", protectAdmin, getAllGalleries);
+
+router.get("/admin/:id", protectAdmin, getGalleryById);
+
+router.post(
+  "/admin/:id/images",
+  protectAdmin,
+  upload.array("images", 20),
+  addImagesToGallery
+);
+
+router.delete("/admin/:id", protectAdmin, deleteGallery);
 
 module.exports = router;
