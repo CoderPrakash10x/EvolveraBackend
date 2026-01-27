@@ -18,7 +18,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://evolvera-club.vercel.app" // 👈 apna frontend domain
+      "https://evolvera-frontend-f9xr.vercel.app/" 
     ],
     credentials: true,
   })
