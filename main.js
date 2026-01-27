@@ -28,8 +28,6 @@ app.use(
   })
 );
 
-// 🔥 VERY IMPORTANT (preflight fix)
-app.options("*", cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
