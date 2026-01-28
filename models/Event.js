@@ -8,29 +8,25 @@ const eventSchema = new mongoose.Schema(
 
     description: String,
     location: String,
-    price: { type: Number, default: 0 },
 
     eventDate: { type: Date, required: true },
+    registrationStartDate: { type: Date, required: true },
+    registrationEndDate: { type: Date, required: true },
 
-    registrationStartDate: {
-      type: Date,
-      required: true
-    },
-    registrationEndDate: {
-      type: Date,
-      required: true
-    },
-
-    status: {
+    // 🔥 IMPORTANT
+    registrationMode: {
       type: String,
-      enum: ["coming_soon", "open", "closed", "past"],
-      default: "coming_soon"
+      enum: ["individual", "team", "both"],
+      required: true,
+      default: "individual"
     },
 
-    isRegistrationOpen: {
-      type: Boolean,
-      default: false
-    },
+    minTeamSize: { type: Number, default: 1 },
+    maxTeamSize: { type: Number, default: 5 },
+
+    skills: [String],
+    perks: [String],
+    rules: [String],
 
     coverImage: String,
 
@@ -42,34 +38,9 @@ const eventSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-
 eventSchema.pre("save", function () {
-  const now = new Date();
-
   if (!this.slug) {
     this.slug = slugify(this.title, { lower: true });
-  }
-
-  if (this.eventDate < now) {
-    this.status = "past";
-    this.isRegistrationOpen = false;
-  }
-
-  else if (now < this.registrationStartDate) {
-    this.status = "coming_soon";
-    this.isRegistrationOpen = false;
-  }
- 
-  else if (
-    now >= this.registrationStartDate &&
-    now <= this.registrationEndDate
-  ) {
-    this.status = "open";
-    this.isRegistrationOpen = true;
-  }
-  else {
-    this.status = "closed";
-    this.isRegistrationOpen = false;
   }
 });
 

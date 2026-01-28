@@ -7,4 +7,6 @@ const {
 
 router.post("/", createRegistration);
 
+
+
 module.exports = router;

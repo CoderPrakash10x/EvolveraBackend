@@ -8,7 +8,7 @@ const normalizeDate = (date) => {
   return d;
 };
 
-/* ================= UTIL: STATUS + REGISTRATION LOGIC ================= */
+/* ================= COMPUTED FIELDS ================= */
 /*
   status:
     past      -> eventDate < today
@@ -30,17 +30,13 @@ const getComputedFields = (event) => {
     ? normalizeDate(event.registrationEndDate)
     : null;
 
-  // EVENT STATUS
   let status = "upcoming";
   if (eventDate < today) status = "past";
   else if (eventDate.getTime() === today.getTime()) status = "live";
 
-  // REGISTRATION STATUS
   let isRegistrationOpen = false;
-  if (regStart && regEnd) {
-    if (today >= regStart && today <= regEnd) {
-      isRegistrationOpen = true;
-    }
+  if (regStart && regEnd && today >= regStart && today <= regEnd) {
+    isRegistrationOpen = true;
   }
 
   return { status, isRegistrationOpen };
@@ -51,14 +47,38 @@ exports.createEvent = async (req, res) => {
   try {
     const imageUrl = req.file ? req.file.path : "";
 
+    const {
+      title,
+      description,
+      location,
+      eventDate,
+      registrationStartDate,
+      registrationEndDate,
+      registrationMode,
+      minTeamSize,
+      maxTeamSize,
+      skills,
+      perks,
+      rules
+    } = req.body;
+
     const event = await Event.create({
-      title: req.body.title,
-      description: req.body.description,
-      location: req.body.location,
-      eventDate: req.body.eventDate,
-      registrationStartDate: req.body.registrationStartDate,
-      registrationEndDate: req.body.registrationEndDate,
-      slug: slugify(req.body.title, { lower: true }),
+      title,
+      slug: slugify(title, { lower: true }),
+      description,
+      location,
+      eventDate,
+      registrationStartDate,
+      registrationEndDate,
+
+      // 🔥 NEW POWER FIELDS
+      registrationMode,
+      minTeamSize,
+      maxTeamSize,
+      skills: skills ? JSON.parse(skills) : [],
+      perks: perks ? JSON.parse(perks) : [],
+      rules: rules ? JSON.parse(rules) : [],
+
       coverImage: imageUrl,
       createdBy: req.admin._id
     });
@@ -75,11 +95,19 @@ exports.createEvent = async (req, res) => {
 /* ================= UPDATE EVENT ================= */
 exports.updateEvent = async (req, res) => {
   try {
-    let updates = { ...req.body };
+    const updates = { ...req.body };
 
-    if (req.file) updates.coverImage = req.file.path;
-    if (updates.title)
+    if (updates.title) {
       updates.slug = slugify(updates.title, { lower: true });
+    }
+
+    if (updates.skills) updates.skills = JSON.parse(updates.skills);
+    if (updates.perks) updates.perks = JSON.parse(updates.perks);
+    if (updates.rules) updates.rules = JSON.parse(updates.rules);
+
+    if (req.file) {
+      updates.coverImage = req.file.path;
+    }
 
     const event = await Event.findByIdAndUpdate(
       req.params.id,

@@ -9,6 +9,7 @@ const normalizeDate = (date) => {
   return d;
 };
 
+/* ================= CREATE REGISTRATION ================= */
 exports.createRegistration = async (req, res) => {
   try {
     const {
@@ -28,68 +29,94 @@ exports.createRegistration = async (req, res) => {
       return res.status(404).json({ message: "Event not found" });
     }
 
+    /* ================= DATE CHECK ================= */
     const today = normalizeDate(new Date());
     const regStart = normalizeDate(eventDoc.registrationStartDate);
     const regEnd = normalizeDate(eventDoc.registrationEndDate);
     regEnd.setHours(23, 59, 59, 999);
 
     if (today < regStart) {
-      return res.status(403).json({
-        message: "Registration coming soon"
-      });
+      return res.status(403).json({ message: "Registration coming soon" });
     }
 
     if (today > regEnd) {
-      return res.status(403).json({
-        message: "Registration closed"
+      return res.status(403).json({ message: "Registration closed" });
+    }
+
+    /* ================= MODE VALIDATION ================= */
+    if (
+      eventDoc.registrationMode === "team" &&
+      registrationType !== "team"
+    ) {
+      return res.status(400).json({
+        message: "This event allows only team registration"
       });
     }
 
-
-    const eventDate = normalizeDate(eventDoc.eventDate);
-    if (eventDate < today) {
-      return res.status(403).json({
-        message: "Event already completed"
+    if (
+      eventDoc.registrationMode === "individual" &&
+      registrationType !== "individual"
+    ) {
+      return res.status(400).json({
+        message: "This event allows only individual registration"
       });
     }
 
+    /* ================= TEAM VALIDATION ================= */
     if (registrationType === "team") {
       if (!teamName) {
         return res.status(400).json({ message: "Team name is required" });
       }
-      if (!members || members.length === 0) {
-        return res.status(400).json({ message: "Team members required" });
+
+      const totalMembers = 1 + (members?.length || 0);
+
+      if (
+        eventDoc.minTeamSize &&
+        totalMembers < eventDoc.minTeamSize
+      ) {
+        return res.status(400).json({
+          message: `Minimum ${eventDoc.minTeamSize} members required`
+        });
+      }
+
+      if (
+        eventDoc.maxTeamSize &&
+        totalMembers > eventDoc.maxTeamSize
+      ) {
+        return res.status(400).json({
+          message: `Maximum ${eventDoc.maxTeamSize} members allowed`
+        });
       }
     }
 
-   
+    /* ================= CREATE ================= */
     const registration = await Registration.create({
       event,
       registrationType,
-      teamName,
+      teamName: registrationType === "team" ? teamName : undefined,
       teamLeader,
       members: registrationType === "team" ? members : []
     });
 
-    /* EMAIL */
-    const userEmail = teamLeader?.email;
-    const userName = teamLeader?.name || "Participant";
-
-    if (userEmail) {
+    /* ================= EMAIL ================= */
+    if (teamLeader?.email) {
       sendEmail({
-        email: userEmail,
+        email: teamLeader.email,
         subject: `Registration Confirmed – ${eventDoc.title}`,
         message: `
           <h2 style="color:#f97316;">Registration Confirmed</h2>
-          <p>Hi <b>${userName}</b>,</p>
+          <p>Hi <b>${teamLeader.name}</b>,</p>
           <p>You are successfully registered for <b>${eventDoc.title}</b>.</p>
           <p><b>Event Date:</b> ${eventDoc.eventDate.toDateString()}</p>
           <p>— Team Evolvera Club</p>
         `
-      }).catch(() => {});
+      }).catch((err) => {
+  console.error("❌ Email send failed:", err.message);
+});
+
     }
 
-    return res.status(201).json({
+    res.status(201).json({
       message: "Registration successful",
       registration
     });
@@ -100,6 +127,8 @@ exports.createRegistration = async (req, res) => {
         message: "You have already registered for this event"
       });
     }
-    return res.status(400).json({ message: error.message });
+
+    res.status(400).json({ message: error.message });
   }
 };
+

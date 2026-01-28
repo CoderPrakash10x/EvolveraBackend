@@ -24,7 +24,10 @@ const registrationSchema = new mongoose.Schema(
       phone: { type: String },
       college: { type: String }
     },
-
+isApproved: {
+  type: Boolean,
+  default: false
+},
     members: [
       {
         name: String,
