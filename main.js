@@ -17,14 +17,8 @@ const app = express();
 
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://evolvera-frontend-u8aw.vercel.app",
-      "evolvera-frontend-u8aw-h3vdnxssj-prakashs-projects-e9516495.vercel.app"
-    ],
+    origin: true,
     credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"]
   })
 );
 
