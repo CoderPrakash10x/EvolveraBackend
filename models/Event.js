@@ -12,7 +12,6 @@ const eventSchema = new mongoose.Schema(
 
     eventDate: { type: Date, required: true },
 
-    // 🔥 NEW — REGISTRATION CONTROL
     registrationStartDate: {
       type: Date,
       required: true
@@ -22,7 +21,6 @@ const eventSchema = new mongoose.Schema(
       required: true
     },
 
-    // 🔥 SYSTEM STATUS
     status: {
       type: String,
       enum: ["coming_soon", "open", "closed", "past"],
@@ -44,7 +42,7 @@ const eventSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-/* ================= AUTO STATUS LOGIC ================= */
+
 eventSchema.pre("save", function () {
   const now = new Date();
 
@@ -52,17 +50,16 @@ eventSchema.pre("save", function () {
     this.slug = slugify(this.title, { lower: true });
   }
 
-  // EVENT FINISHED
   if (this.eventDate < now) {
     this.status = "past";
     this.isRegistrationOpen = false;
   }
-  // REGISTRATION NOT STARTED
+
   else if (now < this.registrationStartDate) {
     this.status = "coming_soon";
     this.isRegistrationOpen = false;
   }
-  // REGISTRATION OPEN
+ 
   else if (
     now >= this.registrationStartDate &&
     now <= this.registrationEndDate
@@ -70,7 +67,6 @@ eventSchema.pre("save", function () {
     this.status = "open";
     this.isRegistrationOpen = true;
   }
-  // REGISTRATION CLOSED (EVENT UPCOMING)
   else {
     this.status = "closed";
     this.isRegistrationOpen = false;

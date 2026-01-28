@@ -13,7 +13,7 @@ const sendEmail = async (options) => {
     from: `"Evolvera Club" <${process.env.EMAIL_USER}>`,
     to: options.email,
     subject: options.subject,
-    html: options.message, // Hum HTML use karenge taaki email sundar dikhe
+    html: options.message,
   };
 
   await transporter.sendMail(mailOptions);

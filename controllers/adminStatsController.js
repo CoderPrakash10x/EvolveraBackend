@@ -1,7 +1,7 @@
 const Event = require("../models/Event");
 const Registration = require("../models/Registration");
 
-// Optimized Way using Aggregation
+
 exports.getEventRegistrationCounts = async (req, res) => {
   try {
     const stats = await Registration.aggregate([
@@ -13,7 +13,7 @@ exports.getEventRegistrationCounts = async (req, res) => {
       },
       {
         $lookup: {
-          from: "events", // Check karna aapke MongoDB mein collection name 'events' hi hai na
+          from: "events", 
           localField: "_id",
           foreignField: "_id",
           as: "eventDetails"

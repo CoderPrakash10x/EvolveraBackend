@@ -4,12 +4,12 @@ const Admin = require("../models/Admin");
 const protectAdmin = async (req, res, next) => {
   let token;
 
-  // 1️⃣ Header token
+  // Header token
   if (req.headers.authorization?.startsWith("Bearer")) {
     token = req.headers.authorization.split(" ")[1];
   }
 
-  // 2️⃣ Query token (Excel download support)
+  //  Query token (Excel download support)
   if (!token && req.query.token) {
     token = req.query.token;
   }

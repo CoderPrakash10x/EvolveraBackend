@@ -7,8 +7,8 @@ const {
   deleteMessage,
 } = require("../controllers/contactController");
 
-router.post("/", createMessage); // user
-router.get("/", protectAdmin, getMessages); // admin
-router.delete("/:id", protectAdmin, deleteMessage); // admin
+router.post("/", createMessage); 
+router.get("/", protectAdmin, getMessages); 
+router.delete("/:id", protectAdmin, deleteMessage); 
 
 module.exports = router;

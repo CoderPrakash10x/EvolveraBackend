@@ -9,7 +9,6 @@ const normalizeDate = (date) => {
   return d;
 };
 
-// POST /api/registrations
 exports.createRegistration = async (req, res) => {
   try {
     const {
@@ -24,13 +23,11 @@ exports.createRegistration = async (req, res) => {
       return res.status(400).json({ message: "Event ID required" });
     }
 
-    /* 1️⃣ Event exist? */
     const eventDoc = await Event.findById(event);
     if (!eventDoc) {
       return res.status(404).json({ message: "Event not found" });
     }
 
-    /* 2️⃣ DATE BASED REGISTRATION WINDOW (FINAL TRUTH) */
     const today = normalizeDate(new Date());
     const regStart = normalizeDate(eventDoc.registrationStartDate);
     const regEnd = normalizeDate(eventDoc.registrationEndDate);
@@ -48,7 +45,7 @@ exports.createRegistration = async (req, res) => {
       });
     }
 
-    /* 3️⃣ Event already completed? */
+
     const eventDate = normalizeDate(eventDoc.eventDate);
     if (eventDate < today) {
       return res.status(403).json({
@@ -56,7 +53,6 @@ exports.createRegistration = async (req, res) => {
       });
     }
 
-    /* 4️⃣ Team rules */
     if (registrationType === "team") {
       if (!teamName) {
         return res.status(400).json({ message: "Team name is required" });
@@ -66,7 +62,7 @@ exports.createRegistration = async (req, res) => {
       }
     }
 
-    /* 5️⃣ Create registration */
+   
     const registration = await Registration.create({
       event,
       registrationType,
@@ -75,7 +71,7 @@ exports.createRegistration = async (req, res) => {
       members: registrationType === "team" ? members : []
     });
 
-    /* 6️⃣ EMAIL */
+    /* EMAIL */
     const userEmail = teamLeader?.email;
     const userName = teamLeader?.name || "Participant";
 

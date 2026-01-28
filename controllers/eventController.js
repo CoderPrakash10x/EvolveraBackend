@@ -1,7 +1,7 @@
 const Event = require("../models/Event");
 const slugify = require("slugify");
 
-/* ================= UTIL: NORMALIZE DATE ================= */
+/* ================= NORMALIZE DATE ================= */
 const normalizeDate = (date) => {
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);

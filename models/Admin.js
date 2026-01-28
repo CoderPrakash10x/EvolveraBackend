@@ -20,7 +20,7 @@ const adminSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// ✅ FIXED pre save middleware
+// FIXED pre save middleware
 adminSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
   this.password = await bcrypt.hash(this.password, 10);

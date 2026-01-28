@@ -15,20 +15,16 @@ const { exportRegistrationsExcel } =
 const { protectAdmin } =
   require("../middlewares/authMiddleware");
 
-// 🔐 AUTH
+
 router.post("/login", loginAdmin);
 
-// ⚠️ OPTIONAL: disable later
-router.post("/register", registerAdmin);
 
-// 📊 STATS
 router.get(
   "/event-registration-count",
   protectAdmin,
   getEventRegistrationCounts
 );
 
-// 📤 EXPORT
 router.get(
   "/export/registrations/:eventId",
   protectAdmin,

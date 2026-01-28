@@ -1,13 +1,11 @@
 const Registration = require("../models/Registration");
 
-// GET /api/admin/registrations/:eventId
-// controllers/adminRegistrationController.js
 
 exports.getRegistrationsByEvent = async (req, res) => {
   try {
     const { eventId } = req.params;
     
-    // 1. Query params se page aur limit lo (defaults ke saath)
+    // 1. Query params se page aur limit lega
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;

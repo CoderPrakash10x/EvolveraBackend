@@ -36,7 +36,7 @@ const registrationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// ❌ same leader + same event = duplicate block
+// same leader + same event = duplicate block
 registrationSchema.index(
   { "teamLeader.email": 1, event: 1 },
   { unique: true }

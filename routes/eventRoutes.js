@@ -13,12 +13,12 @@ const {
 
 const upload = require("../middlewares/uploadMiddleware");
 
-// ✅ PUBLIC
+
 router.get("/", getEvents);
-router.get("/slug/:slug", getEventBySlug); // ⚠️ slug route FIRST
+router.get("/slug/:slug", getEventBySlug); 
 router.get("/:id", getEventById);
 
-// ✅ ADMIN
+
 router.post("/", protectAdmin, upload.single("coverImage"), createEvent);
 router.put(
   "/:id",

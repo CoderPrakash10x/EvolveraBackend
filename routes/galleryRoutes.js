@@ -16,16 +16,8 @@ const galleryUpload = upload.fields([
   { name: "images", maxCount: 20 },
 ]);
 
-/* =====================
-   PUBLIC ROUTES
-===================== */
-
-// User-side gallery
 router.get("/", getAllGalleries);
 
-/* =====================
-   ADMIN ROUTES
-===================== */
 
 router.post("/admin", protectAdmin, galleryUpload, createGalleryEvent);
 
