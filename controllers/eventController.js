@@ -1,45 +1,31 @@
 const Event = require("../models/Event");
 const slugify = require("slugify");
 
-/* ================= NORMALIZE DATE ================= */
-const normalizeDate = (date) => {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  return d;
-};
-
 /* ================= COMPUTED FIELDS ================= */
-/*
-  status:
-    past      -> eventDate < today
-    live      -> eventDate === today
-    upcoming  -> eventDate > today
-
-  isRegistrationOpen:
-    true  -> today between registrationStartDate & registrationEndDate
-*/
 const getComputedFields = (event) => {
-  const today = normalizeDate(new Date());
-  const eventDate = normalizeDate(event.eventDate);
+  const now = new Date();
 
-  const regStart = event.registrationStartDate
-    ? normalizeDate(event.registrationStartDate)
-    : null;
+  const eventStart = new Date(event.eventStartAt);
+  const eventEnd = new Date(event.eventEndAt);
 
-  const regEnd = event.registrationEndDate
-    ? normalizeDate(event.registrationEndDate)
-    : null;
+  const regStart = new Date(event.registrationStartAt);
+  const regEnd = new Date(event.registrationEndAt);
 
+  // Event status
   let status = "upcoming";
-  if (eventDate < today) status = "past";
-  else if (eventDate.getTime() === today.getTime()) status = "live";
+  if (now >= eventStart && now <= eventEnd) status = "live";
+  if (now > eventEnd) status = "past";
 
-  let isRegistrationOpen = false;
-  if (regStart && regEnd && today >= regStart && today <= regEnd) {
-    isRegistrationOpen = true;
-  }
+  // Registration status
+  let registrationStatus = "comingSoon";
+  if (now >= regStart && now <= regEnd) registrationStatus = "open";
+  if (now > regEnd) registrationStatus = "registrationClosed";
 
-  return { status, isRegistrationOpen };
+  return {
+    status,
+    registrationStatus,
+    isRegistrationOpen: registrationStatus === "open"
+  };
 };
 
 /* ================= CREATE EVENT ================= */
@@ -51,9 +37,10 @@ exports.createEvent = async (req, res) => {
       title,
       description,
       location,
-      eventDate,
-      registrationStartDate,
-      registrationEndDate,
+      eventStartAt,
+      eventEndAt,
+      registrationStartAt,
+      registrationEndAt,
       registrationMode,
       minTeamSize,
       maxTeamSize,
@@ -67,18 +54,16 @@ exports.createEvent = async (req, res) => {
       slug: slugify(title, { lower: true }),
       description,
       location,
-      eventDate,
-      registrationStartDate,
-      registrationEndDate,
-
-      // 🔥 NEW POWER FIELDS
+      eventStartAt,
+      eventEndAt,
+      registrationStartAt,
+      registrationEndAt,
       registrationMode,
       minTeamSize,
       maxTeamSize,
       skills: skills ? JSON.parse(skills) : [],
       perks: perks ? JSON.parse(perks) : [],
       rules: rules ? JSON.parse(rules) : [],
-
       coverImage: imageUrl,
       createdBy: req.admin._id
     });
@@ -131,7 +116,7 @@ exports.updateEvent = async (req, res) => {
 /* ================= GET EVENTS ================= */
 exports.getEvents = async (req, res) => {
   try {
-    const events = await Event.find().sort({ eventDate: 1 });
+    const events = await Event.find().sort({ eventStartAt: 1 });
 
     res.json(
       events.map((event) => ({

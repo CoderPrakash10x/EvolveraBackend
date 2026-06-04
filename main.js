@@ -9,15 +9,15 @@ const eventRoutes = require("./routes/eventRoutes");
 const registrationRoutes = require("./routes/registrationRoutes");
 const galleryRoutes = require("./routes/galleryRoutes");
 const contactRoutes = require("./routes/contactRoutes");
+const formRoutes = require("./routes/formRoutes");
+
 connectDB();
 
 const app = express();
 
-// Middleware
-
 app.use(
   cors({
-    origin: true,
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
     credentials: true,
   })
 );
@@ -36,6 +36,7 @@ app.use("/api/events", eventRoutes);
 app.use("/api/registrations", registrationRoutes);
 app.use("/api/gallery", galleryRoutes);
 app.use("/api/contact", contactRoutes);
+app.use("/api/forms", formRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

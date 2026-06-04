@@ -16,6 +16,7 @@ const { protectAdmin } =
   require("../middlewares/authMiddleware");
 
 
+router.post("/register", registerAdmin);
 router.post("/login", loginAdmin);
 
 

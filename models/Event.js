@@ -9,11 +9,14 @@ const eventSchema = new mongoose.Schema(
     description: String,
     location: String,
 
-    eventDate: { type: Date, required: true },
-    registrationStartDate: { type: Date, required: true },
-    registrationEndDate: { type: Date, required: true },
+    /* ========= EVENT TIMING ========= */
+    eventStartAt: { type: Date, required: true },
+    eventEndAt: { type: Date },
 
-    // 🔥 IMPORTANT
+    /* ========= REGISTRATION WINDOW ========= */
+    registrationStartAt: { type: Date, required: true },
+    registrationEndAt: { type: Date, required: true },
+
     registrationMode: {
       type: String,
       enum: ["individual", "team", "both"],
@@ -38,7 +41,8 @@ const eventSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-eventSchema.pre("save", function () {
+/* ========= SLUG AUTO-GENERATE ========= */
+eventSchema.pre("save", function(next) {
   if (!this.slug) {
     this.slug = slugify(this.title, { lower: true });
   }
