@@ -32,6 +32,7 @@ const eventSchema = new mongoose.Schema(
     rules: [String],
 
     coverImage: String,
+     googleFormUrl: { type: String, default: null },
 
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
