@@ -17,7 +17,7 @@ const galleryStorage = new CloudinaryStorage({
 
 
 const upload = multer({
-  storage,
+  galleryStorage,
 
   limits: {
     fileSize: 15 * 1024 * 1024,
