@@ -25,12 +25,17 @@ const galleryUpload = multer({
   storage: galleryStorage,
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    const allowed = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    const allowed = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic", "image/heif"];
+
     if (!allowed.includes(file.mimetype)) {
       return cb(new Error("Only JPG, JPEG, PNG and WEBP allowed"));
     }
     cb(null, true);
   },
+  params: {
+  folder: "website_events/gallery",
+  allowed_formats: ["jpg", "jpeg", "png", "webp", "heic", "heif"],
+},
 });
 
 const galleryFields = galleryUpload.fields([
@@ -39,7 +44,14 @@ const galleryFields = galleryUpload.fields([
 ]);
 
 // ⚠️ ADMIN ROUTES PEHLE — warna /:slug inhe match kar leta hai
-router.get("/admin", protectAdmin, getAllGalleries);
+router.post("/admin", protectAdmin, (req, res, next) => {
+  galleryFields(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ message: err.message });
+    }
+    next();
+  });
+}, createGalleryEvent);
 router.post("/admin", protectAdmin, galleryFields, createGalleryEvent);
 router.get("/admin/:id", protectAdmin, getGalleryById);
 router.post("/admin/:id/images", protectAdmin, galleryUpload.array("images", 20), addImagesToGallery);

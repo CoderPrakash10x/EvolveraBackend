@@ -36,4 +36,4 @@ const gallerySchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model("Gallery", gallerySchema);
+module.exports = mongoose.model("GalleryEvent", gallerySchema);
