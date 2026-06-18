@@ -7,7 +7,7 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
-const galleryStorage = new CloudinaryStorage({
+const storage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: "website_events/gallery",
@@ -17,7 +17,7 @@ const galleryStorage = new CloudinaryStorage({
 
 
 const upload = multer({
-  galleryStorage,
+  storage,
 
   limits: {
     fileSize: 15 * 1024 * 1024,
