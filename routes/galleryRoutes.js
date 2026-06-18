@@ -23,7 +23,7 @@ const galleryStorage = new CloudinaryStorage({
 
 const galleryUpload = multer({
   storage: galleryStorage,
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 15 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowed = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic", "image/heif"];
 
@@ -32,10 +32,6 @@ const galleryUpload = multer({
     }
     cb(null, true);
   },
-  params: {
-  folder: "website_events/gallery",
-  allowed_formats: ["jpg", "jpeg", "png", "webp", "heic", "heif"],
-},
 });
 
 const galleryFields = galleryUpload.fields([
