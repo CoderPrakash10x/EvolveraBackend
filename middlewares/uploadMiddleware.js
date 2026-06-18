@@ -7,20 +7,20 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
-
-const storage = new CloudinaryStorage({
+const galleryStorage = new CloudinaryStorage({
   cloudinary,
   params: {
-    folder: "website_events",
-    allowed_formats: ["jpg", "jpeg", "png", "webp"],
+    folder: "website_events/gallery",
+    allowed_formats: ["jpg", "jpeg", "png", "webp", "heic", "heif"],
   },
 });
+
 
 const upload = multer({
   storage,
 
   limits: {
-    fileSize: 5 * 1024 * 1024,
+    fileSize: 15 * 1024 * 1024,
   },
 
   fileFilter: (req, file, cb) => {
@@ -29,6 +29,8 @@ const upload = multer({
       "image/jpg",
       "image/png",
       "image/webp",
+      "image/heic",
+      "image/heif",
     ];
 
     if (!allowed.includes(file.mimetype)) {
