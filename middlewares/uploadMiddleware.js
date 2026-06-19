@@ -10,7 +10,7 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary,
   params: {
-    folder: "website_events/gallery",
+    folder: "website_events",
     allowed_formats: ["jpg", "jpeg", "png", "webp", "heic", "heif"],
   },
 });

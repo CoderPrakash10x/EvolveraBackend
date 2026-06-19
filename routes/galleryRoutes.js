@@ -40,20 +40,23 @@ const galleryFields = galleryUpload.fields([
 ]);
 
 // ⚠️ ADMIN ROUTES PEHLE — warna /:slug inhe match kar leta hai
-router.post("/admin", protectAdmin, (req, res, next) => {
+// ✅ CORRECT
+router.get("/admin", protectAdmin, getAllGalleries);          // ← ADD THIS BACK
+router.post("/admin", protectAdmin, (req, res, next) => {    // only once, with error handler
   galleryFields(req, res, (err) => {
-    if (err) {
-      return res.status(400).json({ message: err.message });
-    }
+    if (err) return res.status(400).json({ message: err.message });
     next();
   });
 }, createGalleryEvent);
-router.post("/admin", protectAdmin, galleryFields, createGalleryEvent);
 router.get("/admin/:id", protectAdmin, getGalleryById);
-router.post("/admin/:id/images", protectAdmin, galleryUpload.array("images", 20), addImagesToGallery);
+router.post("/admin/:id/images", protectAdmin, (req, res, next) => {
+  galleryUpload.array("images", 20)(req, res, (err) => {
+    if (err) return res.status(400).json({ message: err.message });
+    next();
+  });
+}, addImagesToGallery);
 router.delete("/admin/:id", protectAdmin, deleteGallery);
 
-// PUBLIC — baad mein
 router.get("/", getAllGalleries);
 router.get("/:slug", async (req, res) => {
   try {
@@ -65,5 +68,4 @@ router.get("/:slug", async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
-
 module.exports = router;
