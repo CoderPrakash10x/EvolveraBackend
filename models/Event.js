@@ -9,11 +9,9 @@ const eventSchema = new mongoose.Schema(
     description: String,
     location: String,
 
-    /* ========= EVENT TIMING ========= */
     eventStartAt: { type: Date, required: true },
     eventEndAt: { type: Date },
 
-    /* ========= REGISTRATION WINDOW ========= */
     registrationStartAt: { type: Date, required: true },
     registrationEndAt: { type: Date, required: true },
 
@@ -42,18 +40,17 @@ const eventSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-/* ========= SLUG AUTO-GENERATE ========= */
 eventSchema.pre("save", function (next) {
   if (!this.slug) {
-    // base slug + short random suffix so duplicate titles never collide
+  
     const base = slugify(this.title, { lower: true, strict: true });
-    const suffix = Math.random().toString(36).slice(2, 7); // e.g. "a1b2c"
+    const suffix = Math.random().toString(36).slice(2, 7); 
     this.slug = `${base}-${suffix}`;
   }
   next();
 });
 
-/* ========= FRIENDLY ERROR ON DUPLICATE SLUG (just in case) ========= */
+
 eventSchema.post("save", function (error, doc, next) {
   if (error && error.name === "MongoServerError" && error.code === 11000) {
     next(new Error("An event with a similar title already exists. Try a slightly different title."));
