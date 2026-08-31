@@ -14,6 +14,10 @@ const formRoutes = require("./routes/formRoutes");
 connectDB();
 
 const app = express();
+
+// ✅ Render/Vercel sit behind a proxy — needed for correct req.ip & rate-limiting
+app.set("trust proxy", 1);
+
 app.use(
   cors({
     origin: true,
@@ -43,6 +47,8 @@ app.use("/api/contact", contactRoutes);
 app.use("/api/forms", formRoutes);
 
 const PORT = process.env.PORT || 5000;
+
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
