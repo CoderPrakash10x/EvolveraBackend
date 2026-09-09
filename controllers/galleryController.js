@@ -126,3 +126,71 @@ exports.deleteGallery = async (req, res) => {
   }
 };
 
+
+
+/* =========================
+   GET PUBLIC GALLERY INDEX
+   Returns covers + counts only.
+   The full image arrays are intentionally excluded.
+========================= */
+exports.getPublicGalleries = async (req, res) => {
+  try {
+    const galleries = await Gallery.aggregate([
+      { $sort: { createdAt: -1 } },
+      {
+        $project: {
+          title: 1,
+          slug: 1,
+          cover: 1,
+          createdAt: 1,
+          imageCount: {
+            $size: { $ifNull: ["$images", []] },
+          },
+        },
+      },
+    ]);
+
+    res.json(galleries);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/* =========================
+   GET PUBLIC GALLERY IMAGES
+   Paginated so a gallery never sends every image at once.
+========================= */
+exports.getPublicGalleryBySlug = async (req, res) => {
+  try {
+    const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(
+      Math.max(Number.parseInt(req.query.limit, 10) || 12, 1),
+      24
+    );
+    const skip = (page - 1) * limit;
+
+    const gallery = await Gallery.findOne({ slug: req.params.slug })
+      .select("title slug cover images")
+      .lean();
+
+    if (!gallery) {
+      return res.status(404).json({ message: "Gallery not found" });
+    }
+
+    const totalImages = gallery.images?.length || 0;
+
+    res.json({
+      _id: gallery._id,
+      title: gallery.title,
+      slug: gallery.slug,
+      cover: gallery.cover,
+      images: (gallery.images || []).slice(skip, skip + limit),
+      totalImages,
+      page,
+      limit,
+      hasMore: skip + limit < totalImages,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

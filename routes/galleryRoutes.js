@@ -11,6 +11,8 @@ const {
   getGalleryById,
   addImagesToGallery,
   deleteGallery,
+  getPublicGalleries,
+  getPublicGalleryBySlug,
 } = require("../controllers/galleryController");
 
 const galleryStorage = new CloudinaryStorage({
@@ -57,15 +59,7 @@ router.post("/admin/:id/images", protectAdmin, (req, res, next) => {
 }, addImagesToGallery);
 router.delete("/admin/:id", protectAdmin, deleteGallery);
 
+router.get("/public", getPublicGalleries);
 router.get("/", getAllGalleries);
-router.get("/:slug", async (req, res) => {
-  try {
-    const Gallery = require("../models/GalleryEvent");
-    const gallery = await Gallery.findOne({ slug: req.params.slug });
-    if (!gallery) return res.status(404).json({ message: "Gallery not found" });
-    res.json(gallery);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
+router.get("/:slug", getPublicGalleryBySlug);
 module.exports = router;

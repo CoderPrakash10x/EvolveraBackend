@@ -15,7 +15,7 @@ connectDB();
 
 const app = express();
 
-// ✅ Render/Vercel sit behind a proxy — needed for correct req.ip & rate-limiting
+
 app.set("trust proxy", 1);
 
 app.use(
@@ -27,7 +27,7 @@ app.use(
   })
 );
 
-// ✅ Handle preflight for ALL routes
+
 app.options("/{*path}", cors());
 
 app.use(express.json());

@@ -47,7 +47,7 @@ eventSchema.pre("save", function (next) {
     const suffix = Math.random().toString(36).slice(2, 7); 
     this.slug = `${base}-${suffix}`;
   }
-  next();
+ 
 });
 
 

@@ -116,12 +116,26 @@ exports.updateEvent = async (req, res) => {
 /* ================= GET EVENTS ================= */
 exports.getEvents = async (req, res) => {
   try {
-    const events = await Event.find().sort({ eventStartAt: 1 });
+    // Public listing pages do not need the full event description,
+    // skills, perks and rules. Keeping those fields out of the list
+    // response makes the initial payload smaller.
+    const isSummary = req.query.summary === "true";
+
+    const query = isSummary
+      ? Event.find()
+          .select(
+            "title slug location eventStartAt eventEndAt registrationStartAt registrationEndAt registrationMode coverImage googleFormUrl"
+          )
+          .sort({ eventStartAt: 1 })
+          .lean()
+      : Event.find().sort({ eventStartAt: 1 });
+
+    const events = await query;
 
     res.json(
       events.map((event) => ({
-        ...event.toObject(),
-        ...getComputedFields(event)
+        ...event,
+        ...getComputedFields(event),
       }))
     );
   } catch (err) {
