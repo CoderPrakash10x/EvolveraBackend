@@ -7,17 +7,51 @@ const formSubmissionSchema = new mongoose.Schema(
       ref: "Event",
       required: true
     },
+
     responses: {
-      type: mongoose.Schema.Types.Mixed,         // { full_name: "John", email: "john@x.com", ... }
+      type: mongoose.Schema.Types.Mixed,
       required: true
     },
-    isApproved: { type: Boolean, default: false }
+
+    isApproved: {
+      type: Boolean,
+      default: false
+    }
   },
-  { timestamps: true }
+  {
+    timestamps: true
+  }
 );
 
-// Indexes
-formSubmissionSchema.index({ event: 1, createdAt: -1 });
-formSubmissionSchema.index({ "responses.email": 1, event: 1 }, { unique: true, sparse: true });
 
-module.exports = mongoose.model("FormSubmission", formSubmissionSchema);
+/*
+|--------------------------------------------------------------------------
+| INDEXES
+|--------------------------------------------------------------------------
+*/
+
+// Event submissions sorting
+formSubmissionSchema.index({
+  event: 1,
+  createdAt: -1
+});
+
+
+// Same email can register for multiple events.
+// But same email cannot register twice for the SAME event.
+formSubmissionSchema.index(
+  {
+    "responses.email": 1,
+    event: 1
+  },
+  {
+    unique: true,
+    sparse: true
+  }
+);
+
+
+module.exports = mongoose.model(
+  "FormSubmission",
+  formSubmissionSchema
+);

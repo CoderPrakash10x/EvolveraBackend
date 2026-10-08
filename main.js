@@ -10,9 +10,16 @@ const registrationRoutes = require("./routes/registrationRoutes");
 const galleryRoutes = require("./routes/galleryRoutes");
 const contactRoutes = require("./routes/contactRoutes");
 const formRoutes = require("./routes/formRoutes");
+const repairRegistrationIndexes = require("./utils/repairRegistrationIndexes");
 
-connectDB();
-
+connectDB()
+  .then(() => repairRegistrationIndexes())
+  .catch((error) => {
+    console.error(
+      "Index repair failed:",
+      error.message
+    );
+  });
 const app = express();
 
 
