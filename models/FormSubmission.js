@@ -24,31 +24,25 @@ const formSubmissionSchema = new mongoose.Schema(
 );
 
 
-/*
-|--------------------------------------------------------------------------
-| INDEXES
-|--------------------------------------------------------------------------
-*/
+// Same email + same event = duplicate
+// Same email + different event = allowed
 
-// Event submissions sorting
-formSubmissionSchema.index({
-  event: 1,
-  createdAt: -1
-});
-
-
-// Same email can register for multiple events.
-// But same email cannot register twice for the SAME event.
 formSubmissionSchema.index(
   {
     "responses.email": 1,
     event: 1
   },
   {
-    unique: true,
-    sparse: true
+    sparse: true,
+    name: "unique_email_per_event"
   }
 );
+
+
+formSubmissionSchema.index({
+  event: 1,
+  createdAt: -1
+});
 
 
 module.exports = mongoose.model(
